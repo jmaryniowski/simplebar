@@ -413,61 +413,64 @@ export default class SimpleBar {
   }
 
   recalculate() {
-    const isHeightAuto = this.heightAutoObserverEl.offsetHeight <= 1;
+    // ResizeObserver loop limit exceeded - fix
+    window.requestAnimationFrame(() => {
+      const isHeightAuto = this.heightAutoObserverEl.offsetHeight <= 1;
 
-    this.elStyles = window.getComputedStyle(this.el);
+      this.elStyles = window.getComputedStyle(this.el);
 
-    this.isRtl = this.elStyles.direction === 'rtl';
+      this.isRtl = this.elStyles.direction === 'rtl';
 
-    this.contentEl.style.padding = `${this.elStyles.paddingTop} ${
-      this.elStyles.paddingRight
-    } ${this.elStyles.paddingBottom} ${this.elStyles.paddingLeft}`;
-    this.contentEl.style.height = isHeightAuto ? 'auto' : '100%';
+      this.contentEl.style.padding = `${this.elStyles.paddingTop} ${
+        this.elStyles.paddingRight
+        } ${this.elStyles.paddingBottom} ${this.elStyles.paddingLeft}`;
+      this.contentEl.style.height = isHeightAuto ? 'auto' : '100%';
 
-    this.placeholderEl.style.width = `${this.contentEl.scrollWidth}px`;
-    this.placeholderEl.style.height = `${this.contentEl.scrollHeight}px`;
+      this.placeholderEl.style.width = `${this.contentEl.scrollWidth}px`;
+      this.placeholderEl.style.height = `${this.contentEl.scrollHeight}px`;
 
-    this.wrapperEl.style.margin = `-${this.elStyles.paddingTop} -${
-      this.elStyles.paddingRight
-    } -${this.elStyles.paddingBottom} -${this.elStyles.paddingLeft}`;
+      this.wrapperEl.style.margin = `-${this.elStyles.paddingTop} -${
+        this.elStyles.paddingRight
+        } -${this.elStyles.paddingBottom} -${this.elStyles.paddingLeft}`;
 
-    this.axis.x.track.rect = this.axis.x.track.el.getBoundingClientRect();
-    this.axis.y.track.rect = this.axis.y.track.el.getBoundingClientRect();
+      this.axis.x.track.rect = this.axis.x.track.el.getBoundingClientRect();
+      this.axis.y.track.rect = this.axis.y.track.el.getBoundingClientRect();
+      
+      // Set isOverflowing to false if scrollbar is not necessary (content is shorter than offset)
+      this.axis.x.isOverflowing =
+        (this.scrollbarWidth
+          ? this.contentEl.scrollWidth
+          : this.contentEl.scrollWidth - this.minScrollbarWidth) >
+        Math.ceil(this.axis.x.track.rect.width);
+      this.axis.y.isOverflowing =
+        (this.scrollbarWidth
+          ? this.contentEl.scrollHeight
+          : this.contentEl.scrollHeight - this.minScrollbarWidth) >
+        Math.ceil(this.axis.y.track.rect.height);
 
-    // Set isOverflowing to false if scrollbar is not necessary (content is shorter than offset)
-    this.axis.x.isOverflowing =
-      (this.scrollbarWidth
-        ? this.contentEl.scrollWidth
-        : this.contentEl.scrollWidth - this.minScrollbarWidth) >
-      Math.ceil(this.axis.x.track.rect.width);
-    this.axis.y.isOverflowing =
-      (this.scrollbarWidth
-        ? this.contentEl.scrollHeight
-        : this.contentEl.scrollHeight - this.minScrollbarWidth) >
-      Math.ceil(this.axis.y.track.rect.height);
+      // Set isOverflowing to false if user explicitely set hidden overflow
+      this.axis.x.isOverflowing =
+        this.elStyles.overflowX === 'hidden' ? false : this.axis.x.isOverflowing;
+      this.axis.y.isOverflowing =
+        this.elStyles.overflowY === 'hidden' ? false : this.axis.y.isOverflowing;
 
-    // Set isOverflowing to false if user explicitely set hidden overflow
-    this.axis.x.isOverflowing =
-      this.elStyles.overflowX === 'hidden' ? false : this.axis.x.isOverflowing;
-    this.axis.y.isOverflowing =
-      this.elStyles.overflowY === 'hidden' ? false : this.axis.y.isOverflowing;
+      this.axis.x.forceVisible = this.options.forceVisible === "x" || this.options.forceVisible === true;
+      this.axis.y.forceVisible = this.options.forceVisible === "y" || this.options.forceVisible === true;
 
-    this.axis.x.forceVisible = this.options.forceVisible === "x" || this.options.forceVisible === true;
-    this.axis.y.forceVisible = this.options.forceVisible === "y" || this.options.forceVisible === true;
+      this.axis.x.scrollbar.size = this.getScrollbarSize('x');
+      this.axis.y.scrollbar.size = this.getScrollbarSize('y');
 
-    this.axis.x.scrollbar.size = this.getScrollbarSize('x');
-    this.axis.y.scrollbar.size = this.getScrollbarSize('y');
+      this.axis.x.scrollbar.el.style.width = `${this.axis.x.scrollbar.size}px`;
+      this.axis.y.scrollbar.el.style.height = `${this.axis.y.scrollbar.size}px`;
 
-    this.axis.x.scrollbar.el.style.width = `${this.axis.x.scrollbar.size}px`;
-    this.axis.y.scrollbar.el.style.height = `${this.axis.y.scrollbar.size}px`;
+      this.positionScrollbar('x');
+      this.positionScrollbar('y');
 
-    this.positionScrollbar('x');
-    this.positionScrollbar('y');
+      this.toggleTrackVisibility('x');
+      this.toggleTrackVisibility('y');
 
-    this.toggleTrackVisibility('x');
-    this.toggleTrackVisibility('y');
-
-    this.hideNativeScrollbar();
+      this.hideNativeScrollbar();
+    })
   }
 
   /**
