@@ -424,9 +424,6 @@ export default class SimpleBar {
 
     this.isRtl = this.elStyles.direction === 'rtl';
 
-    this.contentEl.style.padding = `${this.elStyles.paddingTop} ${
-      this.elStyles.paddingRight
-      } ${this.elStyles.paddingBottom} ${this.elStyles.paddingLeft}`;
     this.contentEl.style.height = isHeightAuto ? 'auto' : '100%';
 
     this.placeholderEl.style.width = `${this.contentEl.scrollWidth}px`;
